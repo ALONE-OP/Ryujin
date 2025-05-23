@@ -127,7 +127,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Ryujin.cc" />
     <ClCompile Include="RyujinConsole.cpp" />
+    <ClCompile Include="RyujinUtils.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Ryujin.hh" />
+    <ClInclude Include="RyujinUtils.hh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -18,5 +18,19 @@
     <ClCompile Include="RyujinConsole.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Ryujin.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RyujinUtils.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Ryujin.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RyujinUtils.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
