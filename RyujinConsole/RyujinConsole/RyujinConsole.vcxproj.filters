@@ -13,24 +13,48 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Ryujin">
+      <UniqueIdentifier>{a6c99d12-960c-49be-b336-4f46735958f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ryujin\Utils">
+      <UniqueIdentifier>{f30d7f79-63e4-4d53-b9b2-a6e9a867335f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ryujin\PDB">
+      <UniqueIdentifier>{82c4bcff-ab3c-4c0e-b8ee-d04135859e2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ryujin\Models">
+      <UniqueIdentifier>{df02e440-42fd-4d5d-ace9-62fb1891e33c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RyujinConsole.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Ryujin.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RyujinUtils.cc">
-      <Filter>Source Files</Filter>
+      <Filter>Ryujin\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="RyujinConsole.cc">
+      <Filter>Ryujin</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Ryujin.hh">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="RyujinUtils.hh">
-      <Filter>Header Files</Filter>
+      <Filter>Ryujin\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="RyujinPdbParsing.hh">
+      <Filter>Ryujin\PDB</Filter>
+    </ClInclude>
+    <ClInclude Include="Ryujin.hh">
+      <Filter>Ryujin</Filter>
+    </ClInclude>
+    <ClInclude Include="RyujinProcedure.hh">
+      <Filter>Ryujin\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="RyujinBasicBlock.hh">
+      <Filter>Ryujin\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="RyujinInstruction.hh">
+      <Filter>Ryujin\Models</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
