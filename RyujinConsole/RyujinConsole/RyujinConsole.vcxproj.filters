@@ -56,5 +56,8 @@
     <ClInclude Include="RyujinInstruction.hh">
       <Filter>Ryujin\Models</Filter>
     </ClInclude>
+    <ClInclude Include="RyujinObfuscatorConfig.hh">
+      <Filter>Ryujin\Models</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

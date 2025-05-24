@@ -41,7 +41,7 @@ m_strInputFilePath(strInputFilePath), m_strOutputFilePath(strOutputFilePath), m_
 
 }
 
-bool Ryujin::run() {
+bool Ryujin::run(const RyujinObfuscatorConfig& config) {
 
 	auto imgDos = reinterpret_cast<PIMAGE_DOS_HEADER>(m_mappedPE.get());
 
@@ -80,6 +80,42 @@ bool Ryujin::run() {
 		return FALSE;
 	}
 
+	if (config.m_strProceduresToObfuscate.size() == 0) {
+
+		::OutputDebugStringA(
+
+			_In_ "Ryujin::Ryujin: not provided functions to obfuscate.\n"
+
+		);
+
+		return FALSE;
+	}
+
+	for (const auto& proc : m_ryujinProcedures) {
+
+		auto it = std::find(config.m_strProceduresToObfuscate.begin(), config.m_strProceduresToObfuscate.end(), proc.name);
+
+		if (it == config.m_strProceduresToObfuscate.end()) continue;
+
+		std::printf("[WORKING ON]: %s\n", proc.name);
+
+		// Is a valid procedure ?
+		if (proc.size == 0) {
+
+			::OutputDebugStringA(
+
+				_In_ "Ryujin::Ryujin: The candidate is a ghost function cannot obfuscate this..\n"
+
+			);
+
+			continue;
+		}
+
+		//Create basic blocks
+
+
+	}
+
 }
 
 void Ryujin::listRyujinProcedures() {
@@ -87,19 +123,28 @@ void Ryujin::listRyujinProcedures() {
 	if (!m_isInitialized) {
 
 		::OutputDebugStringA(
-
-			_In_ "Ryujin::Ryujin: not initilized.\n"
-
+			
+			_In_ "Ryujin::listRyujinProcedures: not initialized.\n"
+		
 		);
 
 		return;
 	}
 
-	for (auto& procedure : m_ryujinProcedures) {
+	std::printf("=== Ryujin Procedures ===\n");
 
-		std::printf("%s - 0x%llx - 0x%llx\n", procedure.name.c_str(), procedure.address, procedure.size);
+	for (const auto& procedure : m_ryujinProcedures) {
+
+		std::printf(
+			"Name: %-30s | Address: 0x%016llx | Size: 0x%llx\n",
+			procedure.name.c_str(),
+			procedure.address,
+			procedure.size
+		);
 
 	}
+
+	std::printf("==========================\n");
 
 }
 

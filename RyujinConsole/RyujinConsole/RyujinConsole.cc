@@ -9,7 +9,17 @@ auto main() -> int {
 
     ryujin.get()->listRyujinProcedures();
 
-    ryujin.get()->run();
+    RyujinObfuscatorConfig config;
+    config.m_isIgnoreOriginalCodeRemove = FALSE;
+    config.m_isJunkCode = TRUE;
+    config.m_isRandomSection = FALSE;
+    config.m_isVirtualized = FALSE;
+    std::vector<std::string> procsToObfuscate{
+        "main"
+    };
+    config.m_strProceduresToObfuscate.assign(procsToObfuscate.begin(), procsToObfuscate.end());
+
+    ryujin.get()->run(config);
 
     ryujin.reset();
 

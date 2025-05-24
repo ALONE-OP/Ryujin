@@ -139,6 +139,7 @@
     <ClInclude Include="Ryujin.hh" />
     <ClInclude Include="RyujinBasicBlock.hh" />
     <ClInclude Include="RyujinInstruction.hh" />
+    <ClInclude Include="RyujinObfuscatorConfig.hh" />
     <ClInclude Include="RyujinPdbParsing.hh" />
     <ClInclude Include="RyujinProcedure.hh" />
     <ClInclude Include="RyujinUtils.hh" />

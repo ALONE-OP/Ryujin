@@ -6,6 +6,7 @@
 #include <vector>
 #include "RyujinPdbParsing.hh"
 #include "RyujinUtils.hh"
+#include "RyujinObfuscatorConfig.hh"
 
 class Ryujin {
 
@@ -20,7 +21,7 @@ private:
 
 public:
 	Ryujin(const std::string& strInputFilePath, const std::string& strPdbFilePath, const std::string& strOutputFilePath);
-	bool run();
+	bool run(const RyujinObfuscatorConfig& config);
 	void listRyujinProcedures();
 	~Ryujin();
 
