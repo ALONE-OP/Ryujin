@@ -8,6 +8,7 @@
 #include "Utils/RyujinUtils.hh"
 #include "Models/RyujinObfuscatorConfig.hh"
 #include "RyujinCore/BasicBlockerBuilder.hh"
+#include "RyujinCore/RyujinObfuscationCore.hh"
 #include "Utils/RyujinPESections.hh"
 
 class Ryujin {

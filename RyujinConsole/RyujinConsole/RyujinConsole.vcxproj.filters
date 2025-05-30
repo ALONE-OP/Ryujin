@@ -45,6 +45,9 @@
     <ClCompile Include="Ryujin\Utils\RyujinPESections.cc">
       <Filter>Ryujin\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="Ryujin\RyujinCore\RyujinObfuscationCore.cc">
+      <Filter>Ryujin\RyujinCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ryujin\Models\RyujinBasicBlock.hh">
@@ -73,6 +76,9 @@
     </ClInclude>
     <ClInclude Include="Ryujin\Utils\RyujinPESections.hh">
       <Filter>Ryujin\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Ryujin\RyujinCore\RyujinObfuscationCore.hh">
+      <Filter>Ryujin\RyujinCore</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
