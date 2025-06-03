@@ -5,7 +5,7 @@ auto main() -> int {
 
     std::cout << "Hello World!\n";
 
-    std::unique_ptr<Ryujin> ryujin = std::make_unique<Ryujin>("C:\\Users\\Keowu\\Documents\\GitHub\\MoFei\\x64\\Debug\\DemoObfuscation.exe", "C:\\Users\\Keowu\\Documents\\GitHub\\MoFei\\x64\\Debug\\DemoObfuscation.pdb", "C:\\Users\\Keowu\\Documents\\GitHub\\MoFei\\x64\\Debug\\DemoObfuscation2.exe");
+    std::unique_ptr<Ryujin> ryujin = std::make_unique<Ryujin>("C:\\Users\\Keowu\\Documents\\GitHub\\Ryujin\\RyujinConsole\\x64\\Debug\\DemoObfuscation.exe", "C:\\Users\\Keowu\\Documents\\GitHub\\Ryujin\\RyujinConsole\\x64\\Debug\\DemoObfuscation.pdb", "C:\\Users\\Keowu\\Documents\\GitHub\\Ryujin\\RyujinConsole\\x64\\Debug\\DemoObfuscation.obfuscated.exe");
 
     ryujin.get()->listRyujinProcedures();
 
@@ -15,7 +15,12 @@ auto main() -> int {
     config.m_isRandomSection = FALSE;
     config.m_isVirtualized = FALSE;
     std::vector<std::string> procsToObfuscate{
-        "main"
+        "main",
+        "mainCRTStartup",
+        "invoke_main",
+        "sum",
+        "__scrt_common_main",
+        "j___security_init_cookie"
     };
     config.m_strProceduresToObfuscate.assign(procsToObfuscate.begin(), procsToObfuscate.end());
 

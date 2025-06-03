@@ -159,22 +159,31 @@ bool Ryujin::run(const RyujinObfuscatorConfig& config) {
 	RyujinPESections peSections;
 	peSections.AddNewSection(m_strInputFilePath, chSectionName);
 
-	//Get New Opcodes - todo: improve, this only works for the first procedure
-	std::vector<unsigned char> tempValued;
+	uintptr_t offsetVA = 0;
+	std::vector<unsigned char> opcodesWithRelocsFixed;
 	for (auto& obc : processed_procs) {
 
-		tempValued = obc.getProcessedProc().getUpdateOpcodes();
+		auto tempValued = obc.getProcessedProc().getUpdateOpcodes();
 
 		//Fix relocations
-		obc.applyRelocationFixupsToInstructions(reinterpret_cast<uintptr_t>(imgDos), peSections.getRyujinSectionVA(), tempValued);
+		obc.applyRelocationFixupsToInstructions(reinterpret_cast<uintptr_t>(imgDos), peSections.getRyujinSectionVA() + offsetVA, tempValued);
+
+		//Removendo e adicionando um salto no procedimento original e removendo opcodes originais para um salto ao novo código ofuscado
+		obc.removeOldOpcodeRedirect(peSections.mappedPeDiskBaseAddress(), peSections.getRyujinMappedPeSize(), reinterpret_cast<uintptr_t>(imgDos) + peSections.getRyujinSectionVA() + offsetVA);
 
 		//Destructing class
 		obc.~RyujinObfuscationCore();
 
+		//Inserindo procedures na lista de opcodes corrigidos
+		opcodesWithRelocsFixed.insert(opcodesWithRelocsFixed.end(), tempValued.begin(), tempValued.end());
+
+		// Incrementando o offset com o tamanho dos opcodes em questão
+		offsetVA += tempValued.size();
+
 	}
 
 	//Process new opcodes
-	peSections.ProcessOpcodesNewSection(tempValued);
+	peSections.ProcessOpcodesNewSection(opcodesWithRelocsFixed);
 
 	//Save output file
 	peSections.FinishNewSection(m_strOutputFilePath);

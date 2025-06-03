@@ -97,8 +97,7 @@ void RyujinObfuscationCore::addPaddingSpaces() {
 			code.init(runtime.environment());
 			asmjit::x86::Assembler a(&code);
 
-			for (auto i = 0; i < MAX_PADDING_SPACE_INSTR; i++)
-				a.nop();
+			for (auto i = 0; i < MAX_PADDING_SPACE_INSTR; i++) a.nop();
 
 			code.flatten();
 
@@ -148,43 +147,45 @@ uint32_t RyujinObfuscationCore::findOpcodeOffset(const uint8_t* data, size_t dat
 
 std::vector<uint8_t> RyujinObfuscationCore::fix_branch_near_far_short(uint8_t original_opcode, uint64_t jmp_address, uint64_t target_address) {
 	
-	// Mapping short opcodes to near
 	static const std::unordered_map<uint8_t, uint8_t> SHORT_TO_NEAR = {
 
 		{ 0x70, 0x80 }, { 0x71, 0x81 }, { 0x72, 0x82 }, { 0x73, 0x83 },
 		{ 0x74, 0x84 }, { 0x75, 0x85 }, { 0x76, 0x86 }, { 0x77, 0x87 },
 		{ 0x78, 0x88 }, { 0x79, 0x89 }, { 0x7A, 0x8A }, { 0x7B, 0x8B },
 		{ 0x7C, 0x8C }, { 0x7D, 0x8D }, { 0x7E, 0x8E }, { 0x7F, 0x8F }
-
+	
 	};
 
 	std::vector<uint8_t> result;
 
-	// First tries as a short jump (2 bytes)
+	// Tries to handle as a short jump (2 bytes)
 	const int short_length = 2;
 	const int64_t short_disp = static_cast<int64_t>(target_address) - (jmp_address + short_length);
 
 	if (short_disp >= -128 && short_disp <= 127) {
-
-		// Keeps it as a short jump
+		
 		result.push_back(original_opcode);
 		result.push_back(static_cast<uint8_t>(short_disp));
-
+		
 		return result;
 	}
 
-	// Converts to a near jump (6 bytes)
+	// If it is not a conditional jump, returns the original
 	auto it = SHORT_TO_NEAR.find(original_opcode);
-	if (it == SHORT_TO_NEAR.end()) throw new std::exception("[X] RyujinObfuscationCore::fix_branch_offset_cpp: Branch opcode is not suported to regenerate a branch");
-	
+	if (it == SHORT_TO_NEAR.end()) {
+
+		result.push_back(original_opcode);
+		
+		return result; // Does not apply conversion
+	}
+
+	// Handles as a near jump (6 bytes)
 	const uint8_t near_opcode = it->second;
 	const int near_length = 6;
 	const int64_t near_disp = static_cast<int64_t>(target_address) - (jmp_address + near_length);
 
-	// Checks for 32-bit overflow
 	if (near_disp < INT32_MIN || near_disp > INT32_MAX) throw std::exception("[X] Offset exceeds the limit of a 32-bit signed integer.");
 
-	// Packs the displacement (little-endian)
 	result.push_back(0x0F);
 	result.push_back(near_opcode);
 
@@ -433,6 +434,44 @@ void RyujinObfuscationCore::applyRelocationFixupsToInstructions(uintptr_t imageB
 		block_id++;
 
 	}
+
+}
+
+void RyujinObfuscationCore::removeOldOpcodeRedirect(uintptr_t newMappedPE, std::size_t szMapped, uintptr_t newObfuscatedAddress) {
+
+	/*
+		Creating signatures to search for the opcode in the PE mapped from disk.
+		We will use findOpcodeOffset to find the exact offset of the procedure's start
+		in the unmapped region with the SEC_IMAGE flag.
+	*/
+	unsigned char ucSigature[10]{ 0 };
+	std::memcpy(ucSigature, reinterpret_cast<void*>(m_proc.address), 10);
+	auto offsetz = findOpcodeOffset(reinterpret_cast<unsigned char*>(newMappedPE), szMapped, &ucSigature, 10);
+
+	/*
+		Removing all the opcodes from the original procedure and replacing them with NOP instructions.
+	*/
+	std::memset(reinterpret_cast<void*>(newMappedPE + offsetz), 0x90, m_proc.size);
+
+	/*
+		Creating a new JMP opcode in such a way that it can be added to the old region that was completely replaced by NOP,
+		thus redirecting execution to the new obfuscated code.
+	*/
+	unsigned char ucOpcodeJmp[5]{
+		0xE9, 0, 0, 0, 0, //JMP imm
+	};
+
+	/*	
+		Calculating the new displacement between the original code region and the target obfuscated opcode,
+		calculating the relative immediate offset.
+	*/
+	const uint32_t offset = newObfuscatedAddress - (m_proc.address + 5);
+
+	//Replacing the jump opcode with the new relative immediate displacement value.
+	std::memcpy(&*(ucOpcodeJmp + 1), &offset, sizeof(uint32_t));
+
+	//Inserting the new jump opcode into the original cleaned function to redirect execution to the fully obfuscated code.
+	std::memcpy(reinterpret_cast<void*>(newMappedPE + offsetz), ucOpcodeJmp, 5);
 
 }
 

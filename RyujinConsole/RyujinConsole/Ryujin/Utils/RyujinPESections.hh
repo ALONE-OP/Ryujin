@@ -31,9 +31,19 @@ public:
 		return m_ucResizedPE;
 	}
 
+	uintptr_t mappedPeDiskBaseAddress() {
+
+		return reinterpret_cast<uintptr_t>(m_dosHeader);
+	}
+
 	uintptr_t getRyujinSectionSize() {
 
 		return m_szNewSec;
+	}
+
+	uintptr_t getRyujinMappedPeSize() {
+
+		return m_szFile;
 	}
 
 	BOOL AddNewSection(const std::string& strInputFilePath, char chSectionName[8]);
