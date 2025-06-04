@@ -149,9 +149,6 @@ bool Ryujin::run(const RyujinObfuscatorConfig& config) {
 
 	}
 
-	//Remove old code and jump to the new code region
-	if (config.m_isIgnoreOriginalCodeRemove) todoAction();
-
 	//Add section
 	char chSectionName[8]{ '.', 'R', 'y', 'u', 'j', 'i', 'n', '\0' };
 	if (config.m_isRandomSection) RyujinUtils::randomizeSectionName(chSectionName);
@@ -169,7 +166,7 @@ bool Ryujin::run(const RyujinObfuscatorConfig& config) {
 		obc.applyRelocationFixupsToInstructions(reinterpret_cast<uintptr_t>(imgDos), peSections.getRyujinSectionVA() + offsetVA, tempValued);
 
 		//Removendo e adicionando um salto no procedimento original e removendo opcodes originais para um salto ao novo código ofuscado
-		obc.removeOldOpcodeRedirect(peSections.mappedPeDiskBaseAddress(), peSections.getRyujinMappedPeSize(), reinterpret_cast<uintptr_t>(imgDos) + peSections.getRyujinSectionVA() + offsetVA);
+		obc.removeOldOpcodeRedirect(peSections.mappedPeDiskBaseAddress(), peSections.getRyujinMappedPeSize(), reinterpret_cast<uintptr_t>(imgDos) + peSections.getRyujinSectionVA() + offsetVA, config.m_isIgnoreOriginalCodeRemove);
 
 		//Destructing class
 		obc.~RyujinObfuscationCore();

@@ -26,7 +26,7 @@ private:
 public:
 	RyujinObfuscationCore(const RyujinObfuscatorConfig& config, const RyujinProcedure& proc);
 	void applyRelocationFixupsToInstructions(uintptr_t imageBase, DWORD virtualAddress, std::vector<unsigned char>& new_opcodes);
-	void removeOldOpcodeRedirect(uintptr_t newMappedPE, std::size_t szMapped, uintptr_t newObfuscatedAddress);
+	void removeOldOpcodeRedirect(uintptr_t newMappedPE, std::size_t szMapped, uintptr_t newObfuscatedAddress, bool isIgnoreOriginalCodeRemove = false);
 	BOOL Run();
 	RyujinProcedure getProcessedProc();
 	~RyujinObfuscationCore();

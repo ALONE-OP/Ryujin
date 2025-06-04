@@ -437,7 +437,7 @@ void RyujinObfuscationCore::applyRelocationFixupsToInstructions(uintptr_t imageB
 
 }
 
-void RyujinObfuscationCore::removeOldOpcodeRedirect(uintptr_t newMappedPE, std::size_t szMapped, uintptr_t newObfuscatedAddress) {
+void RyujinObfuscationCore::removeOldOpcodeRedirect(uintptr_t newMappedPE, std::size_t szMapped, uintptr_t newObfuscatedAddress, bool isIgnoreOriginalCodeRemove) {
 
 	/*
 		Creating signatures to search for the opcode in the PE mapped from disk.
@@ -448,10 +448,8 @@ void RyujinObfuscationCore::removeOldOpcodeRedirect(uintptr_t newMappedPE, std::
 	std::memcpy(ucSigature, reinterpret_cast<void*>(m_proc.address), 10);
 	auto offsetz = findOpcodeOffset(reinterpret_cast<unsigned char*>(newMappedPE), szMapped, &ucSigature, 10);
 
-	/*
-		Removing all the opcodes from the original procedure and replacing them with NOP instructions.
-	*/
-	std::memset(reinterpret_cast<void*>(newMappedPE + offsetz), 0x90, m_proc.size);
+	// Based on the obfuscation configuration, some users can decide to not remove the original code from the original procedure after obfuscation.
+	if (!isIgnoreOriginalCodeRemove) std::memset(reinterpret_cast<void*>(newMappedPE + offsetz), 0x90, m_proc.size); // Removing all the opcodes from the original procedure and replacing them with NOP instructions.
 
 	/*
 		Creating a new JMP opcode in such a way that it can be added to the old region that was completely replaced by NOP,
