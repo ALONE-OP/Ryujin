@@ -15,6 +15,7 @@ auto main() -> int {
     config.m_isRandomSection = FALSE;
     config.m_isVirtualized = FALSE;
     config.m_isIatObfuscation = TRUE;
+    config.m_isEncryptObfuscatedCode = FALSE;
     std::vector<std::string> procsToObfuscate{
         "main",
         "invoke_main",

@@ -179,6 +179,9 @@ bool Ryujin::run(const RyujinObfuscatorConfig& config) {
 
 	}
 
+	// Encrypt all obfuscated code
+	if (config.m_isEncryptObfuscatedCode) todoAction();
+
 	//Process new opcodes
 	peSections.ProcessOpcodesNewSection(opcodesWithRelocsFixed);
 

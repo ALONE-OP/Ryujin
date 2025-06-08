@@ -84,15 +84,12 @@ void RyujinObfuscationCore::addPaddingSpaces() {
 
 			std::vector<ZyanU8> new_opcodes;
 
-			for (auto individual_opcode : opcode) {
-
+			for (auto individual_opcode : opcode)
 				new_opcodes.push_back(individual_opcode);
-
-			}
 
 			new_instructions.push_back(new_opcodes);
 
-			//Inserindo junkcode
+			//Storing Nop-Spacing
 			std::vector<ZyanU8> gen_opcodes;
 
 			asmjit::CodeHolder code;
@@ -104,12 +101,10 @@ void RyujinObfuscationCore::addPaddingSpaces() {
 			code.flatten();
 
 			auto section = code.sectionById(0);
-			const uint8_t* buf = section->buffer().data();
-			size_t size = section->buffer().size();
+			const auto buf = section->buffer().data();
+			auto size = section->buffer().size();
 
-			for (size_t i = 0; i < size; ++i) {
-				gen_opcodes.push_back(buf[i]);
-			}
+			for (auto i = 0; i < size; ++i) gen_opcodes.push_back(buf[i]);
 
 			new_instructions.push_back(gen_opcodes);
 
@@ -144,12 +139,12 @@ void RyujinObfuscationCore::obfuscateIat() {
 				auto data = opcode.data();
 				auto size = opcode.size();
 
-				if (data[0] == uopcode) { //0xFF ?
+				if (data[0] == uopcode)  //0xFF ?
 
 					if (std::memcmp(&*(data + 2), &value, sizeof(uint32_t)) == 0) // Is it the same memory immediate?
 
 						return std::make_pair(block_id, opcode_id);
-				}
+				
 
 				opcode_id++;
 
@@ -159,7 +154,7 @@ void RyujinObfuscationCore::obfuscateIat() {
 		}
 
 		return std::make_pair(-1, -1);
-		};
+	};
 
 	for (auto& block : m_obfuscated_bb) {
 
@@ -270,6 +265,10 @@ void RyujinObfuscationCore::obfuscateIat() {
 	return;
 }
 
+void RyujinObfuscationCore::insertJunkCode() {
+	// TODO
+}
+
 void RyujinObfuscationCore::updateBasicBlocksContext() {
 
 	auto new_obfuscated_opcodes = getProcessedProc().getUpdateOpcodes();
@@ -297,9 +296,18 @@ BOOL RyujinObfuscationCore::Run() {
 
 	}
 
+	if (m_config.m_isJunkCode) {
+
+		//First let's insert junk code
+		insertJunkCode();
+
+		//Update our basic blocks context to rely 1-1 for the new obfuscated opcodes.
+		this->updateBasicBlocksContext();
+
+	}
+
 	/*
-	if (config.m_isJunkCode) todoAction();
-	if (config.m_isVirtualized) todoAction();
+		if (m_config.m_isVirtualized) todoAction();
 	*/
 
 	return TRUE;
