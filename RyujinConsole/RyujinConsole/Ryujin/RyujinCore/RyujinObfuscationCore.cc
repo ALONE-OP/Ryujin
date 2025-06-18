@@ -408,44 +408,44 @@ void RyujinObfuscationCore::insertJunkCode() {
 void RyujinObfuscationCore::insertVirtualization() {
 
 	/*
-		1 - Converter instruções do procedimento e seus basic blocks para o bytecode da VM(cada instrução gera 8 bytes de bytecode).
-		2 - Substiuir a instrução por uma call para a rotina de interpretação da VM e passar os bytecodes via RCX. (levar em consideração o salvamento dos contextos de registradore e stack)
-		3 - Ser capaz de continuar a execução sem problemas integrando a rotina da VM com o código original a ser executado e não ofuscado
-		
-		4 - Essa rotina deve inserir a stub e bytecode da vm apenas. após isso teremos um processamento antes de salvar e corrigir relocações
-		para sermos capazes de encontrar o padrão da rotina de virtualização e colocar o endereço real do interpretador da VM para que a mesma funcione.
+		1 - Convert the procedure's instructions and their basic blocks into the VM's bytecode (each instruction generates 8 bytes of bytecode).
+		2 - Replace the instruction with a call to the VM's interpretation routine and pass the bytecodes via RCX. (Take into account saving the register and stack contexts.)
+		3 - Be able to continue execution without issues, integrating the VM routine with the original code that is to be executed and not obfuscated.
+		4 - This routine should insert only the VM stub and bytecode. After that, there will be a processing step before saving and fixing relocations, so we can identify the virtualization routine pattern and insert the real address of the VM interpreter to make it work.
 
+		Basically, this is a single-VM that:
+			Analyzes the instruction in question, extracts its opcode and maps it to the VM's opcode, extracts its immediates and stores everything in a single set.
+		Example:
+			0x48 -> mov -> bytecode
+			rbx -> bytecode
+			10 -> value
 
-		Basicamente essa é uma single-vm que:
-			Analisa a instrução em questão. extrair seu opcode e mapear para o da vm, extrair seus immediatos e armazenala em um unico conjunto
-			exemplo: 
-				0x48 -> mov -> bytecode
-				rbx ->  bytecode
-				10 -> valor
+		Example output:
+			0x112210
 
-			Exemplo de saída:
-				0x112210
+		Which will be assigned to the value of RCX:
 
-			Que sera atribuido ao valor de rcx:
+			push rcx
+			mov rcx, 112210h
+			call vmentry (but a symbolic value, since the immediate offset wouldn't be inserted here)
+			-> rax result goes to the register in question that would continue the execution flow or receive the result, in this example: rbx
+			pop rcx
 
-				push rcx
-				mov rcx, 112210h
-				call vmentry(mas um valor simbolico visto que não seria inserido o offset immediato aqui)
-				-> rax resultado vai no registrado em questão que continuaria o fluxo de execução ou receberia o resultado, nesse exemplo: rbx
-				pop rcx
-
-			Dessa forma o código continuaria
+		In this way, the code would continue.
 	*/
 
-	// É uma instrução candidata a ser virtualizada pela minivm ??
+	/*
+		Ryujin MiniVM Logic Begin
+	*/
+	// Is it a candidate instruction to be virtualized by the minivm?
 	auto isValidToSRyujinMiniVm = [&](RyujinInstruction instr) {
 
 		return instr.instruction.operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER && instr.instruction.operands[1].type == ZYDIS_OPERAND_TYPE_IMMEDIATE &&
-			//Ignorando registradores e operações de stack
+			// Ignoring registers and stack operations
 			(instr.instruction.operands[0].reg.value != ZYDIS_REGISTER_RSP && instr.instruction.operands[0].reg.value != ZYDIS_REGISTER_RBP);
 	};
 
-	// Vamos mapear o registrador do Zydis para o ASMJIT
+	// Let's map the Zydis register to ASMJIT
 	auto mapZydisToAsmjitGp = [&](ZydisRegister zydisReg) -> asmjit::x86::Gp {
 
 		switch (zydisReg) {
@@ -555,7 +555,7 @@ void RyujinObfuscationCore::insertVirtualization() {
 
 	};
 
-	// Vamos traduzir uma instrução para o bytecode da MiniVm do Ryujin
+	// Let's translate an instruction to the MiniVm bytecode from Ryujin
 	auto translateToMiniVmBytecode = [&](ZydisRegister reg, ZyanU8 op, ZyanU64 value) {
 
 		ZyanU64 miniVmByteCode = 0;
@@ -727,69 +727,89 @@ void RyujinObfuscationCore::insertVirtualization() {
 			default: break;
 		}
 
-
 		return miniVmByteCode;
 	};
 
-	// Inicializando o runtime do asmjit
+	// Initializing the asmjit runtime
 	asmjit::JitRuntime runtime;
 
 	for (auto& block : m_proc.basic_blocks) {
 		
 		for (auto& instr : block.instructions) {
 			
-			// Vector para armazenarmos os opcodes da MiniVm do Ryujin
+			// Vector to store the MiniVm opcodes from Ryujin
 			std::vector<ZyanU8> minivm_enter;
 
 			// Operand type
 			ZyanU8 opType = 0;
 
-			// Encontrando o block info para o opcode atual
+			// Finding the block info for the current opcode
 			auto block_info = findBlockId(instr.instruction.info.opcode, instr.instruction.operands[1].imm.value.u, 2, sizeof(unsigned char));
 
-			// Caso não encontremos
+			// If not found
 			if (block_info.first == -1 || block_info.second == -1) continue;
 
-			// Recuperando os opcodes originais desta instrução ao qual trabalhamos
+			// Retrieving the original opcodes of the instruction we're working on
 			auto& data = m_proc.basic_blocks[block_info.first].opcodes[block_info.second];
 
-			// Verificando por operands candidatos a serem virtualizados pela minivm
+			// Checking for operands that are candidates to be virtualized by the minivm
 			if (instr.instruction.info.mnemonic == ZYDIS_MNEMONIC_ADD && isValidToSRyujinMiniVm(instr)) opType = 1;
 			else if (instr.instruction.info.mnemonic == ZYDIS_MNEMONIC_SUB && isValidToSRyujinMiniVm(instr)) opType = 2;
 			else if (instr.instruction.info.mnemonic == ZYDIS_MNEMONIC_IMUL && isValidToSRyujinMiniVm(instr)) opType = 3;
 			else if (instr.instruction.info.mnemonic == ZYDIS_MNEMONIC_DIV && isValidToSRyujinMiniVm(instr)) opType = 4;
 
-			//Existe um VM Operator novo ?
+			// Is there a new VM Operator?
 			if (opType != 0) {
 
-				// Inicializando para o asmjit gerar as instruções de nossa minivm
+				//TODO: Implementar algoritmo para ofuscar as constantes da PEB e do Bytecode da VM para um layer extra de segurança
+				//TODO: Tentar fazer a MiniVm Stub dinâmicamente
+
+				// Initializing asmjit to generate our minivm instructions
 				asmjit::CodeHolder code;
 				code.init(runtime.environment());
 				asmjit::x86::Assembler a(&code);
 
+				// Saving the current value of RCX
 				a.push(asmjit::x86::rcx);
-				a.mov(asmjit::x86::rcx, translateToMiniVmBytecode(instr.instruction.operands[0].reg.value, opType, instr.instruction.operands[1].imm.value.u)); //TODO: e se o reg ex: rax já tiver uma valor para um add, devemos armazenar rax também ?
+				// Saving the current value of RDX
+				a.push(asmjit::x86::rdx);
+				// Storing in the first argument RCX the value of the register from the first operand of the mathematical operation
+				a.mov(asmjit::x86::rcx, mapZydisToAsmjitGp(instr.instruction.operands[0].reg.value));
+				// Storing in the second argument RDX the value of the bytecode sequence to be interpreted by the Ryujin MiniVM
+				a.mov(asmjit::x86::rdx, translateToMiniVmBytecode(instr.instruction.operands[0].reg.value, opType, instr.instruction.operands[1].imm.value.u));
+				// Using `rdgsbase rax` to store the base address of the GS segment in RAX
 				a.emit(asmjit::x86::Inst::kIdRdgsbase, asmjit::x86::rax);
+				// Adding to RAX the offset value for the PEB
 				a.add(asmjit::x86::rax, 0x60);
+				// Accessing and retrieving the PEB address to store it in RAX
 				a.mov(asmjit::x86::rax, asmjit::x86::ptr(asmjit::x86::rax));
+				// Adding to RAX the "ImageBase" field of the PEB
 				a.add(asmjit::x86::rax, 0x10);
+				// Accessing the "ImageBase" address in the PEB to obtain the actual value
 				a.mov(asmjit::x86::rax, asmjit::x86::ptr(asmjit::x86::rax));
+				// Adding to the "ImageBase" value a "default" offset that will later be overwritten by the actual offset of the MiniVM enter
 				a.add(asmjit::x86::rax, asmjit::imm(0x88));
+				// Calling the MiniVMEnter procedure to execute
 				a.call(asmjit::x86::rax);
+				// Storing the result of the MiniVM execution stored in RAX into the correct register to continue the normal execution flow
 				a.mov(mapZydisToAsmjitGp(instr.instruction.operands[0].reg.value), asmjit::x86::rax);
+				// Restoring the original value of RDX
+				a.pop(asmjit::x86::rdx);
+				// Restoring the original value of RCX
 				a.pop(asmjit::x86::rcx);
 
+				// Retrieving from ASMJIT’s JIT the resulting opcodes generated by our algorithm
 				auto& opcodeBuffer = code.sectionById(0)->buffer();
 				const auto pOpcodeBuffer = opcodeBuffer.data();
 				minivm_enter.reserve(opcodeBuffer.size());
 
-				// Armazenando cada opcocde individual no nosso vector da minivm
+				// Storing each individual opcode in our minivm vector
 				for (auto i = 0; i < opcodeBuffer.size(); ++i) minivm_enter.push_back(static_cast<ZyanU8>(pOpcodeBuffer[i]));
 
-				// Sobrescrevendo opcodes antigos pelos novos
+				// Overwriting old opcodes with the new ones
 				data.assign(minivm_enter.begin(), minivm_enter.end());
 
-				std::printf("[!] Inserting a new MiniVm on %s\n", instr.instruction.text);
+				std::printf("[!] Inserting a new MiniVm ByteCode on %s\n", instr.instruction.text);
 
 			}
 
@@ -1154,17 +1174,23 @@ void RyujinObfuscationCore::InsertMiniVmEnterProcedureAddress(uintptr_t imageBas
 
 	//Inserting Ryujin MiniVm Address on each vm entry reference
 	if (m_config.m_isVirtualized) {
+		
 		auto size = new_opcodes.size();
 		auto data = new_opcodes.data();
 
 		unsigned char ucSignature[]{ 0x48, 0x05, 0x88, 0x00, 0x00, 0x00 };
 
 		for (auto i = 0; i < size; i++)
+
 			if (std::memcmp(&*(data + i), ucSignature, 6) == 0) {
-				std::printf("FIND!!\n");
+
+				std::printf("[OK] Inserting MiniVmEnter at %llx\n", imageBase + virtualAddress + i);
+				
 				std::memset(&*(data + i + 2), 0, 4);
 				std::memcpy(&*(data + i + 2), &virtualAddress, sizeof(uint32_t));
+			
 			}
+	
 	}
 
 }

@@ -18,6 +18,8 @@ auto main() -> int {
     config.m_isEncryptObfuscatedCode = FALSE;
     std::vector<std::string> procsToObfuscate{
         "sum",
+        "sub",
+        "subadd",
         "main",
         "invoke_main"
         "__scrt_common_main",
