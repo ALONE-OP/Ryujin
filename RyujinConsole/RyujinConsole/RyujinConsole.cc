@@ -1,36 +1,5 @@
 #include <iostream>
-
-// TODO: Fit it in a new class for ryujin
-#include <vector>
-#include <Windows.h>
-class RyujinObfuscatorConfig {
-
-public:
-    bool m_isRandomSection; // Randomize the name of the new section with the processed code -> ".Ryujin" standard
-    bool m_isVirtualized; // Virtualize the code [Try as much as possible]
-    bool m_isIatObfuscation; //Process IAT Obfuscation
-    bool m_isJunkCode; // Insert junk code to confuse
-    bool m_isIgnoreOriginalCodeRemove; // Do not remove the original code after processing (replace the original instructions with NOPs)
-    bool m_isEncryptObfuscatedCode; // The user wants to encrypt all obfuscated code to avoid detection
-    std::vector<std::string> m_strProceduresToObfuscate; // Names of the procedures to obfuscate
-
-    bool RunRyujin(const std::string& strInputFilePath, const std::string& strPdbFilePath, const std::string& strOutputFilePath, RyujinObfuscatorConfig& config) {
-
-        using tpdRunRyujinCore = BOOL (__stdcall *)(const std::string& strInputFilePath, const std::string& strPdbFilePath, const std::string& strOutputFilePath, RyujinObfuscatorConfig& config);
-
-        auto hModule = LoadLibraryW(L"RyujinCore.dll");
-
-        if (!hModule) return FALSE;
-
-        auto RunRyujinCore = reinterpret_cast<tpdRunRyujinCore>(GetProcAddress(hModule, "?RunRyujinCore@@YAHAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@00AEAVRyujinObfuscatorConfig@@@Z"));
-
-        if (!RunRyujinCore) return FALSE;
-
-        return RunRyujinCore(strInputFilePath, strPdbFilePath, strOutputFilePath, config);
-    }
-
-};
-
+#include "RyujinCore.hh"
 
 
 auto main() -> int {
@@ -57,7 +26,7 @@ auto main() -> int {
     };
     config.m_strProceduresToObfuscate.assign(procsToObfuscate.begin(), procsToObfuscate.end());
 
-    auto bSuccess = config.RunRyujin("C:\\Users\\Keowu\\Documents\\GitHub\\Ryujin\\RyujinConsole\\x64\\Release\\DemoObfuscation.exe", "C:\\Users\\Keowu\\Documents\\GitHub\\Ryujin\\RyujinConsole\\x64\\Release\\DemoObfuscation.pdb", "C:\\Users\\Keowu\\Documents\\GitHub\\Ryujin\\RyujinConsole\\x64\\Release\\DemoObfuscation.obfuscated.exe", config);
+    auto bSuccess = config.RunRyujin("C:\\Users\\Keowu\\Documents\\GitHub\\Ryujin\\compiled\\release\\DemoObfuscation.exe", "C:\\Users\\Keowu\\Documents\\GitHub\\Ryujin\\compiled\\release\\DemoObfuscation.pdb", "C:\\Users\\Keowu\\Documents\\GitHub\\Ryujin\\compiled\\release\\DemoObfuscation.obfuscated.exe", config);
 
     std::printf("Ryujin core returned: %d\n", bSuccess);
 
