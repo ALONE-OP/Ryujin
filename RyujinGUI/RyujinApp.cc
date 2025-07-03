@@ -633,6 +633,19 @@ auto RyujinApp::BindRunEvent(wxFrame* frame) -> void {
 
     frame->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
 
+        if (m_input->IsEmpty() || m_pdb->IsEmpty() || m_output->IsEmpty()) {
+
+            wxMessageBox(
+
+                "To obfuscate you mandatory need to provide the following informations: Input PE, Input PE PDB, Ouput PE.\nPlease check if these files are valid, they cannot be empty!",
+                "Error, please more attention",
+                wxOK | wxICON_ERROR
+            
+            );
+
+            return;
+        }
+
         frame->SetStatusText("Starting obfuscation...");
         m_progress->Pulse();
 
