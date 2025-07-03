@@ -3,6 +3,10 @@
 #include <wx/gauge.h>
 #include <wx/textdlg.h>
 #include <wx/statline.h>
+#include <wx/mstream.h>
+#include <thread>
+#include "resource.h"
+#include "RyujinCore.hh"
 
 class RyujinApp : public wxApp {
 
@@ -25,6 +29,7 @@ private:
     auto BindFileDialogs(wxFrame* frame) -> void;
     auto BindListEvents(wxFrame* frame) -> void;
     auto BindRunEvent(wxFrame* frame) -> void;
+    auto LoadPngFromRes(wxWindow* parent, wxWindowID id, int resId) -> wxStaticBitmap*;
 
 public:
     bool OnInit() override;

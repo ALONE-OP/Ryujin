@@ -1,16 +1,16 @@
 #include "RyujinApp.hh"
 
 bool RyujinApp::OnInit() {
-
+    
     auto* frame = new wxFrame(
-        
+
         nullptr,
         wxID_ANY,
         "Ryujin Obfuscator",
         wxDefaultPosition,
         wxSize(
-            
-            850,
+        
+            650,
             580
         
         ),
@@ -18,7 +18,7 @@ bool RyujinApp::OnInit() {
     
     );
 
-    frame->SetBackgroundColour(    
+    frame->SetBackgroundColour(
         wxColour(
             
             25,
@@ -26,7 +26,6 @@ bool RyujinApp::OnInit() {
             25
         
     ));
-
     frame->SetFont(
         wxFont(
             
@@ -34,8 +33,20 @@ bool RyujinApp::OnInit() {
             wxFONTFAMILY_SWISS,
             wxFONTSTYLE_NORMAL,
             wxFONTWEIGHT_NORMAL
-        
+
     ));
+
+    auto* panel = new wxPanel(
+    
+        frame,
+        wxID_ANY
+    
+    );
+    panel->SetBackgroundColour(
+        
+        frame->GetBackgroundColour( )
+    
+    );
 
     auto* topSizer = new wxBoxSizer(
         
@@ -43,40 +54,27 @@ bool RyujinApp::OnInit() {
     
     );
 
-    auto* title = new wxStaticText(
-        
-        frame,
-        wxID_ANY,
-        "Ryujin Obfuscator"
-    
-    );
-    title->SetFont(
-        wxFont(
+    if (
+        auto* icon = LoadPngFromRes(
             
-            18,
-            wxFONTFAMILY_SWISS,
-            wxFONTSTYLE_NORMAL,
-            wxFONTWEIGHT_BOLD
+            panel,
+            wxID_ANY,
+            IDB_PNG1
         
-    ));
-    title->SetForegroundColour(
+     ))
+        topSizer->Add(
+            
+            icon,
+            0,
+            wxALIGN_CENTER | wxTOP,
+            10
         
-        *wxWHITE
-    
-    );
+        );
+
     topSizer->Add(
-        
-        title,
-        0,
-        wxALIGN_CENTER | wxTOP,
-        20
-    
-    );
-    topSizer->Add(
-    
         new wxStaticLine(
-        
-            frame
+            
+            panel
         
         ),
         0,
@@ -88,18 +86,18 @@ bool RyujinApp::OnInit() {
     auto* pathBox = new wxStaticBoxSizer(
         
         wxVERTICAL,
-        frame,
+        panel,
         "Paths"
     
     );
-    pathBox->GetStaticBox()->SetForegroundColour(
+    pathBox->GetStaticBox( )->SetForegroundColour(
         
         *wxWHITE
     
     );
     m_input = DrawnPathRow(
         
-        frame,
+        panel,
         pathBox,
         "Input EXE:",
         wxID_HIGHEST + 1
@@ -107,15 +105,15 @@ bool RyujinApp::OnInit() {
     );
     m_pdb = DrawnPathRow(
         
-        frame,
-        pathBox, 
-        "PDB File:", 
+        panel,
+        pathBox,
+        "PDB File:",
         wxID_HIGHEST + 2
     
     );
     m_output = DrawnPathRow(
         
-        frame,
+        panel,
         pathBox,
         "Output EXE:",
         wxID_HIGHEST + 3
@@ -133,11 +131,11 @@ bool RyujinApp::OnInit() {
     auto* optionsBox = new wxStaticBoxSizer(
         
         wxVERTICAL,
-        frame,
+        panel,
         "Obfuscation Options"
     
     );
-    optionsBox->GetStaticBox()->SetForegroundColour(
+    optionsBox->GetStaticBox( )->SetForegroundColour(
         
         *wxWHITE
     
@@ -152,37 +150,37 @@ bool RyujinApp::OnInit() {
     );
     m_virtualize = DrawnStyledCheckbox(
         
-        frame,
+        panel,
         "Virtualize"
     
     );
     m_junk = DrawnStyledCheckbox(
         
-        frame,
+        panel,
         "Junk Code"
     
     );
     m_encrypt = DrawnStyledCheckbox(
         
-        frame,
+        panel,
         "Encrypt"
     
     );
     m_randomSection = DrawnStyledCheckbox(
         
-        frame,
+        panel,
         "Random Section"
     
     );
     m_obfuscateIat = DrawnStyledCheckbox(
         
-        frame,
+        panel,
         "Obfuscate IAT"
     
     );
     m_ignoreOriginalCodeRemove = DrawnStyledCheckbox(
         
-        frame,
+        panel,
         "Ignore Original Code Removal"
     
     );
@@ -217,7 +215,6 @@ bool RyujinApp::OnInit() {
         m_ignoreOriginalCodeRemove
     
     );
-
     optionsBox->Add(
         
         optionsSizer,
@@ -238,18 +235,18 @@ bool RyujinApp::OnInit() {
     auto* procBox = new wxStaticBoxSizer(
         
         wxVERTICAL,
-        frame,
+        panel,
         "Procedures to Obfuscate"
     
     );
-    procBox->GetStaticBox()->SetForegroundColour(
+    procBox->GetStaticBox( )->SetForegroundColour(
         
         *wxWHITE
     
     );
     m_procList = new wxListBox(
         
-        frame,
+        panel,
         wxID_ANY,
         wxDefaultPosition,
         wxDefaultSize,
@@ -258,6 +255,14 @@ bool RyujinApp::OnInit() {
         wxBORDER_NONE
     
     );
+    
+    m_procList->SetMinSize(
+        wxSize(
+            
+            -1,
+            200
+        
+    ));
     m_procList->SetBackgroundColour(
         wxColour(
             
@@ -288,10 +293,10 @@ bool RyujinApp::OnInit() {
     procBtnRow->Add(
         DrawnRyujinButton(
             
-            frame,
+            panel,
             "Add",
             wxID_HIGHEST + 4
-
+        
         ),
         0,
         wxRIGHT,
@@ -301,10 +306,10 @@ bool RyujinApp::OnInit() {
     procBtnRow->Add(
         DrawnRyujinButton(
             
-            frame,
+            panel,
             "Remove",
             wxID_HIGHEST + 5
-
+        
     ));
     procBox->Add(
         
@@ -324,14 +329,14 @@ bool RyujinApp::OnInit() {
 
     m_progress = new wxGauge(
         
-        frame,
+        panel,
         wxID_ANY,
         100
     
     );
     m_progress->SetMinSize(
         wxSize(
-            
+    
             -1,
             14
         
@@ -355,7 +360,7 @@ bool RyujinApp::OnInit() {
 
     auto* runBtn = DrawnRyujinButton(
         
-        frame,
+        panel,
         "Run Obfuscator",
         wxID_HIGHEST + 6
     
@@ -406,15 +411,21 @@ bool RyujinApp::OnInit() {
     
     );
 
-    frame->CreateStatusBar();
-    frame->SetSizerAndFit(
+    panel->SetSizer(
         
         topSizer
     
     );
-    frame->Centre();
-    frame->Show();
+    topSizer->SetSizeHints(
+        
+        panel
+    
+    );
+    frame->Fit( );
+    frame->Centre( );
+    frame->Show( );
 
+    frame->CreateStatusBar( );
     BindFileDialogs(
         
         frame
@@ -433,6 +444,7 @@ bool RyujinApp::OnInit() {
 
     return true;
 }
+
 
 auto RyujinApp::DrawnPathRow(wxWindow* parent, wxBoxSizer* sizer, const wxString& label, int buttonId) -> wxTextCtrl* {
 
@@ -596,7 +608,7 @@ auto RyujinApp::BindListEvents(wxFrame* frame) -> void {
 
     frame->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
 
-        wxTextEntryDialog dlg(frame, "Enter comma-separated procedures or a unique procedure name:");
+        wxTextEntryDialog dlg(frame, "Enter comma-separated procedures or a unique procedure name:", "Procedures to obfuscate");
         if (dlg.ShowModal() == wxID_OK) {
         
             wxArrayString list = wxSplit(dlg.GetValue(), ',');
@@ -620,13 +632,122 @@ auto RyujinApp::BindListEvents(wxFrame* frame) -> void {
 auto RyujinApp::BindRunEvent(wxFrame* frame) -> void {
 
     frame->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
-    
+
         frame->SetStatusText("Starting obfuscation...");
         m_progress->Pulse();
-        wxMilliSleep(1000);
-        m_progress->SetValue(100);
-        frame->SetStatusText("Obfuscation complete.");
-    
+
+        std::thread([=]() {
+            
+            RyujinObfuscatorConfig core;
+
+            // Options Configuration
+            core.m_isEncryptObfuscatedCode = m_encrypt->IsChecked();
+            core.m_isIatObfuscation = m_obfuscateIat->IsChecked();
+            core.m_isIgnoreOriginalCodeRemove = m_ignoreOriginalCodeRemove->IsChecked();
+            core.m_isJunkCode = m_junk->IsChecked();
+            core.m_isRandomSection = m_randomSection->IsChecked();
+            core.m_isVirtualized = m_virtualize->IsChecked();
+
+            // Procedures to obfuscate
+            std::vector<std::string> procsToObfuscate;
+            auto count = m_procList->GetCount();
+            procsToObfuscate.reserve(count);
+
+            for (auto i = 0; i < count; ++i) {
+
+                auto item = m_procList->GetString(i);
+                procsToObfuscate.push_back(item.ToStdString());
+            
+            }
+            core.m_strProceduresToObfuscate.assign(procsToObfuscate.begin(), procsToObfuscate.end());
+
+            auto bSuccess = core.RunRyujin(m_input->GetValue().ToStdString(), m_pdb->GetValue().ToStdString(), m_output->GetValue().ToStdString(), core);
+
+            frame->CallAfter([=]() {
+                
+                if (bSuccess) {
+                
+                    m_progress->SetValue(100);
+                    frame->SetStatusText("Obfuscation complete.");
+                
+                } else {
+
+                    m_progress->SetValue(50);
+                    frame->SetStatusText("Obfuscation error.");
+                
+                }
+
+            });
+
+        }).detach();
+
     }, wxID_HIGHEST + 6);
 
+}
+
+auto RyujinApp::LoadPngFromRes(wxWindow* parent, wxWindowID id, int resId) -> wxStaticBitmap* {
+
+    wxImage::AddHandler(
+    
+        new wxPNGHandler
+    
+    );
+
+    auto hInst = reinterpret_cast<HINSTANCE>(GetModuleHandle(
+        
+        _In_ NULL
+    
+    ));
+    auto rs = FindResource(
+      
+        _In_ hInst,
+        _In_ MAKEINTRESOURCE(resId),
+        _In_ wxT("PNG")
+    
+    );
+
+    if (!rs) return nullptr;
+
+    auto hGlob = LoadResource(
+        
+        _In_opt_ hInst,
+        _In_ rs
+    
+    );
+    auto* data = LockResource(
+        
+       _In_ hGlob
+    
+    );
+    auto size = SizeofResource(
+        
+        _In_opt_ hInst,
+        _In_ rs
+    
+    );
+    wxMemoryInputStream mis(
+        
+        data,
+        size
+    
+    );
+
+    wxImage img(
+        
+        mis,
+        wxBITMAP_TYPE_PNG
+    
+    );
+
+    if (!img.IsOk( )) return nullptr;
+
+    return new wxStaticBitmap(
+        
+        parent,
+        id,
+        wxBitmap(
+        
+            img
+        
+    ));
 }

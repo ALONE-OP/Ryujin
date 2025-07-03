@@ -13,15 +13,37 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="RyujinCore">
+      <UniqueIdentifier>{38744ed6-b50a-4be0-bf17-6128092b44eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RyujinGUI">
+      <UniqueIdentifier>{77bfeccd-c1fb-48af-af85-98b6afe4398c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="RyujinCore.hh">
+      <Filter>RyujinCore</Filter>
+    </ClInclude>
+    <ClInclude Include="RyujinApp.hh">
+      <Filter>RyujinGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RyujinApp.cc">
-      <Filter>Source Files</Filter>
+      <Filter>RyujinGUI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RyujinApp.hh">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ResourceCompile Include="RyujinGUI.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\imgs\logogui.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
