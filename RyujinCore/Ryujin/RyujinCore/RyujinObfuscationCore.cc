@@ -1951,17 +1951,25 @@ void RyujinObfuscationCore::updateBasicBlocksContext() {
 
 void RyujinObfuscationCore::insertBreakDecompilers(asmjit::x86::Assembler& a) {
 
-	//Breaking Decompilers(https://youtu.be/6UlxrDYng88?t=1287)
-	a.push(asmjit::x86::rbx);
-
-	std::vector<unsigned char> breakDecompilerOneByteTrick{
-
-		0xEB, 0xFF, 0xC3
+	//Inspired by Breaking Decompilers(https://youtu.be/6UlxrDYng88?t=1287)
+	const std::vector<std::pair<asmjit::x86::Gp, std::vector<uint8_t>>> tricks = {
+		
+		{ asmjit::x86::rbx, { 0xEB, 0xFF, 0xC3 } },
+		{ asmjit::x86::rdx, { 0xEB, 0xFF, 0xC2, 0x90, 0x90 } },
+		{ asmjit::x86::rcx, { 0xEB, 0xFF, 0xC9 } },
+		{ asmjit::x86::rax, { 0xEB, 0xFF, 0xC0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 } }
 
 	};
-	a.embed(breakDecompilerOneByteTrick.data(), breakDecompilerOneByteTrick.size());
-	
-	a.pop(asmjit::x86::rbx);
+
+	static std::mt19937 rng(static_cast<unsigned>(std::time(nullptr)));
+	std::uniform_int_distribution<size_t> dist(0, tricks.size() - 1);
+	const auto& selected = tricks[dist(rng)];
+	const auto& reg = selected.first;
+	const auto& bytes = selected.second;
+
+	a.push(reg);
+	a.embed(bytes.data(), bytes.size());
+	a.pop(reg);
 
 }
 
