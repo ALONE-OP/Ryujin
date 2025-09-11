@@ -2593,7 +2593,8 @@ uint32_t RyujinObfuscationCore::findOpcodeOffset(const uint8_t* data, size_t dat
 }
 
 std::vector<uint8_t> RyujinObfuscationCore::fix_branch_near_far_short(uint8_t original_opcode, uint64_t jmp_address, uint64_t target_address) {
-
+	
+	//  Opcodes form the range of short Jcc (0x7x) -> near Jcc (0x0F 8x)
 	static const std::unordered_map<uint8_t, uint8_t> SHORT_TO_NEAR = {
 
 		{ 0x70, 0x80 }, { 0x71, 0x81 }, { 0x72, 0x82 }, { 0x73, 0x83 },
@@ -2605,7 +2606,7 @@ std::vector<uint8_t> RyujinObfuscationCore::fix_branch_near_far_short(uint8_t or
 
 	std::vector<uint8_t> result;
 
-	// Tries to handle as a short jump (2 bytes)
+	// Tries to handle as a short jump (2 bytes) -> (2 bytes: opcode + disp8)
 	const int short_length = 2;
 	const int64_t short_disp = static_cast<int64_t>(target_address) - (jmp_address + short_length);
 
@@ -2617,7 +2618,7 @@ std::vector<uint8_t> RyujinObfuscationCore::fix_branch_near_far_short(uint8_t or
 		return result;
 	}
 
-	// If it is not a conditional jump, returns the original
+	// If it is not a conditional jump, returns the original -> Jcc 
 	auto it = SHORT_TO_NEAR.find(original_opcode);
 	if (it == SHORT_TO_NEAR.end()) {
 
@@ -2626,7 +2627,7 @@ std::vector<uint8_t> RyujinObfuscationCore::fix_branch_near_far_short(uint8_t or
 		return result; // Does not apply conversion
 	}
 
-	// Handles as a near jump (6 bytes)
+	// Handles as a near jump (6 bytes) -> NEAR jump (6 bytes: 0F 8x + disp32)
 	const uint8_t near_opcode = it->second;
 	const int near_length = 6;
 	const int64_t near_disp = static_cast<int64_t>(target_address) - (jmp_address + near_length);
@@ -2660,7 +2661,9 @@ void RyujinObfuscationCore::applyRelocationFixupsToInstructions(uintptr_t imageB
 
 		for (auto& instruction : block.instructions) {
 
-			//Fixing all Call to a immediate(No IAT) values from our obfuscated opcodes -> CALL IMM
+			// -------------------
+			// Fixing all Call to a immediate(No IAT) values from our obfuscated opcodes -> CALL rel32 (no IAT)
+			// -------------------
 			if (instruction.instruction.info.meta.category == ZYDIS_CATEGORY_CALL && instruction.instruction.operands->type == ZYDIS_OPERAND_TYPE_IMMEDIATE) {
 
 				//References for the data and size of the vector with the obfuscated opcodes
@@ -2704,7 +2707,7 @@ void RyujinObfuscationCore::applyRelocationFixupsToInstructions(uintptr_t imageB
 				std::printf("[OK] Fixing CALL IMM -> %s from 0x%X to 0x%X\n", instruction.instruction.text, immediateValue, new_immediate_reloc);
 
 			}
-			//Fixing all Call to a memory(IAT) values from our obfuscated opcodes -> CALL [MEMORY]
+			//Fixing all Call to a memory(IAT) values from our obfuscated opcodes -> CALL [MEMORY] (IAT)
 			else if (instruction.instruction.info.meta.category == ZYDIS_CATEGORY_CALL && instruction.instruction.operands->type == ZYDIS_OPERAND_TYPE_MEMORY && !m_config.m_isIatObfuscation) {
 
 				// References for the vector's data and size with the obfuscated opcodes
@@ -2750,7 +2753,7 @@ void RyujinObfuscationCore::applyRelocationFixupsToInstructions(uintptr_t imageB
 				std::printf("[OK] Fixing IAT Call -> %s from 0x%X to 0x%X\n", instruction.instruction.text, obfuscated_call_iat_va, new_memory_immediate_iat);
 
 			}
-			// Searching for MOV and LEA instructions that have the second operand as memory-relative
+			// Searching for MOV and LEA instructions that have the second operand as memory-relative -> LEA / MOV reg, [RIP+disp]
 			else if ((instruction.instruction.info.mnemonic == ZYDIS_MNEMONIC_LEA || instruction.instruction.info.mnemonic == ZYDIS_MNEMONIC_MOV) && instruction.instruction.operands[1].type == ZYDIS_OPERAND_TYPE_MEMORY) {
 
 				const ZydisDecodedOperandMem* mem = &instruction.instruction.operands[1].mem;
@@ -2763,7 +2766,7 @@ void RyujinObfuscationCore::applyRelocationFixupsToInstructions(uintptr_t imageB
 					auto data = new_opcodes.data();
 
 					//Avoid memory op for stack
-					if (instruction.instruction.operands->mem.base == ZYDIS_REGISTER_RSP) {
+					if (instruction.instruction.operands->mem.base == ZYDIS_REGISTER_RSP || instruction.instruction.operands->mem.base == ZYDIS_REGISTER_RBP) {
 
 						std::printf("Invalid relocation fix candidate for -> %s\n", instruction.instruction.text);
 
@@ -2837,6 +2840,7 @@ void RyujinObfuscationCore::applyRelocationFixupsToInstructions(uintptr_t imageB
 				}
 
 			}
+			// Fixing displacements on left side aka read memory -> MOV / LEA [memory], reg 
 			else if ((instruction.instruction.info.mnemonic == ZYDIS_MNEMONIC_MOV || instruction.instruction.info.mnemonic == ZYDIS_MNEMONIC_LEA) && instruction.instruction.operands->type == ZYDIS_OPERAND_TYPE_MEMORY && instruction.instruction.operands->mem.type == ZYDIS_MEMOP_TYPE_MEM) {
 
 				if (instruction.instruction.info.length > 5) {
@@ -2848,7 +2852,7 @@ void RyujinObfuscationCore::applyRelocationFixupsToInstructions(uintptr_t imageB
 					const ZydisDecodedOperandMem* mem = &instruction.instruction.operands[0].mem;
 
 					//Avoid memory op for stack
-					if (instruction.instruction.operands->mem.base == ZYDIS_REGISTER_RSP) {
+					if (instruction.instruction.operands->mem.base == ZYDIS_REGISTER_RSP || instruction.instruction.operands->mem.base == ZYDIS_REGISTER_RBP) {
 
 						//std::printf("Invalid relocation fix candidate for -> %s\n", instruction.instruction.text);
 
@@ -2923,6 +2927,7 @@ void RyujinObfuscationCore::applyRelocationFixupsToInstructions(uintptr_t imageB
 				}
 
 			}
+			// Fixing disp32 mem access -> ADD / SUB / XOR [mem], reg  (ou reg, [mem])
 			else if ((instruction.instruction.info.mnemonic == ZYDIS_MNEMONIC_ADD || instruction.instruction.info.mnemonic == ZYDIS_MNEMONIC_SUB || instruction.instruction.info.mnemonic == ZYDIS_MNEMONIC_XOR) && (instruction.instruction.operands[0].type == ZYDIS_OPERAND_TYPE_MEMORY || instruction.instruction.operands[1].type == ZYDIS_OPERAND_TYPE_MEMORY)) {
 
 
@@ -2931,7 +2936,7 @@ void RyujinObfuscationCore::applyRelocationFixupsToInstructions(uintptr_t imageB
 					auto data = new_opcodes.data();
 
 					//Avoid memory op for stack
-					if (instruction.instruction.operands->mem.base == ZYDIS_REGISTER_RSP) {
+					if (instruction.instruction.operands->mem.base == ZYDIS_REGISTER_RSP || instruction.instruction.operands->mem.base == ZYDIS_REGISTER_RBP) {
 
 						std::printf("Invalid relocation fix candidate for -> %s\n", instruction.instruction.text);
 
@@ -3003,6 +3008,7 @@ void RyujinObfuscationCore::applyRelocationFixupsToInstructions(uintptr_t imageB
 					std::printf("[OK] Fixing Math/Bitwise Operators -> %s | %d\n", instruction.instruction.text, instruction.instruction.info.length);
 
 			}
+			// Fixing unconditional memory jumps and conditional linking each basic block offset for near/far procs -> Jumps [REG]
 			else if (instruction.instruction.info.meta.category == ZYDIS_CATEGORY_COND_BR || instruction.instruction.info.meta.category == ZYDIS_CATEGORY_UNCOND_BR) {
 
 				// References for data and vector size with obfuscated opcodes
