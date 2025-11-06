@@ -1,92 +1,122 @@
 # Ryūjin Protector
 
-**Ryūjin Protector** is an open-source **Bin2Bin** obfuscation, protection, and DRM tool for **Windows PE** binaries targeting the **Intel x64 architecture(Only)**.
+**Ryūjin Protector** is an open-source Bin2Bin obfuscation, protection, and DRM tool for Windows PE binaries targeting the Intel x64 architecture (x86_64 only).
 
 <p align="center">
-  <img src="imgs/ryujinreadme.png" alt="Ryūjin Protector Banner" width="80%">
+  <img src="imgs/ryujinreadme.png" alt="Ryūjin Protector Banner" width="70%">
 </p>
 
 ---
+## Overview
 
+Ryūjin is a research-grade protector and obfuscator built to explore Bin2Bin transformation techniques. It is suitable for security researchers, reverse engineers, anti-cheat and anti-tamper developers, and others studying binary protection. Ryūjin focuses on transforming binaries while preserving original program semantics.
+
+---
 ## Features
 
-- Junk Code Insertion + Code Mutation (Fully randomic without breaking the original logic)
-- IAT Call Access Obfuscation(With obfuscated handlers access)
-- Random Section naming(Default name: Ryujin)
-- Mathematical Operators Virtualization(aka: Ryūjin MiniVM)
-- Obfuscated code Encryption(Using TeaDelKew Algorithm)
-- Anti-Debug User + Kernel
-- Troll Reversers(Exclusive)
-- Anti-Dump
-- Anti-Disassembly + Anti-Decompiler
-- Memory Protection(CRC32)
-- Custom Passes(MBA Obfuscation Pass and Custom Passes from Ryujin Community)
+- Junk code insertion and code mutation (randomized while preserving original logic)
+- IAT call access obfuscation (with obfuscated handler access)
+- Random section naming (default: `Ryujin`)
+- Mathematical operator virtualization (Ryūjin MiniVM)
+- Mathematical operator virtualization with Hyper-V isolation (MiniVM + Hyper-V)
+- Encrypted code sections (TeaDelKew algorithm)
+- Anti-debug (user-mode and kernel-mode)
+- TrollReversers (can induce BSOD during reversing attempts)
+- Anti-dump protections
+- Anti-disassembly and anti-decompiler techniques
+- Memory integrity protection (CRC32-based)
+- Custom pass support (includes **MBA-linear Obfuscation Pass** and community passes)
+- And more, see the wiki for a complete list
 
 ---
 
 ## Demos and Presentations
 
-Ryūjin was designed and developed for the study of obfuscators with Bin2Bin capabilities, making it a viable project for use by third parties as well as serious information security students. This includes: Commercial Developers, Indie Developers/Cheat Developers, Anti-Cheat Developers, Malware Developers, Malware Analysts, and Security Researchers.
-
-**A Simple Comparison on a "main" function. before and after applying Ryūjin:**
+Ryūjin is intended primarily as a study and research tool. Below are small demos showing a `main` function before and after a Ryūjin pass:
 
 ![Ryūjin Protector Demo](imgs/demo.png)
 
-This is only a small demo with only one Ryūjin feature, others feature together produce a better result.
+> This demo shows one feature; combining multiple features produces stronger obfuscation. See the Ryūjin Wiki for full examples and explanations.
 
-**Really Easy to Use:**
+### Modes of use
 
-**Ryūjin** is extremely easy to use — you can choose between the GUI mode or the CLI mode. Both will produce the same result in a precise, functional, and stable way.
+Ryūjin supports both CLI and GUI:
 
-GUI Mode Demonstration:
-![Ryūjin Protector Demo GUI](imgs/demo1.png)
+- **CLI:** Full functionality and advanced options for expert/research users.
+- **GUI:** Simplified interface for quick runs (requires `wxWidgets`).
 
-CLI Mode Demonstration:
+CLI demo:
 ![Ryūjin Protector Demo Console](imgs/demo2.png)
 
-For both options, you will need exclusively a PE file (Apanas, executable, for now) along with a PDB file containing the symbols for that PE file, so that you can protect and generate a new binary. Additionally, you can consult the WIKI at any time to discover other options and possibilities, such as custom passes.
+GUI demo:
+![Ryūjin Protector Demo GUI](imgs/demo1.png)
+
+**Input requirements:** a PE executable (EXE) for x64 and its PDB file containing symbols. The PDB is required to enable several transformation passes that rely on symbol information.
 
 ---
-
 ## Custom Pass Support
 
-In addition to the standard techniques available via CLI or GUI options, Ryūjin also supports a Custom Pass feature. This allows anyone to implement a callback that is invoked during the obfuscation flow, enabling users to extend Ryūjin’s capabilities with custom features specific to their code.
+Ryūjin supports custom passes through a simple callback model. A custom pass receives a `RyujinProcedure` instance and can modify basic blocks, scopes, or other procedure-level structures.
 
-To do this, the user must follow a specific callback model:
+Example callback signature:
 
 ```c++
 void RyujinCustomPassDemo(RyujinProcedure* proc);
-```
+````
 
-Each time the callback is invoked, a ```RyujinProcedure``` instance is provided, allowing the user to modify execution scopes, basic block structures, and more. The class definition can be found in [RyujinProcedure.hh](https://github.com/keowu/Ryujin/blob/main/RyujinCore/Ryujin/Models/RyujinProcedure.hh). Additionally, a usage example is available in [RyujinConsole.cc](https://github.com/keowu/Ryujin/blob/main/RyujinConsole/RyujinConsole/RyujinConsole.cc#L10), No additional configuration file changes are required. The ```RyujinObfuscatorConfig``` class already includes all necessary settings for immediate use.
+See the class definition here:  
+**[RyujinProcedure.hh](https://github.com/keowu/Ryujin/blob/main/RyujinCore/Ryujin/Models/RyujinProcedure.hh).**
 
+Example usage is included here:  
+**[RyujinCustomPasses.hh](https://github.com/keowu/Ryujin/blob/main/RyujinConsole/RyujinConsole/RyujinCustomPasses.hh#L11).**
+
+No additional configuration changes are required. `RyujinObfuscatorConfig` already exposes the settings needed to register and run custom passes.
+
+---
+## Ryūjin Bin2Bin Obfuscator Core - Structure/Design Diagram 
+
+<div style="max-width:100%; max-height:600px; overflow:auto; border:1px solid #ddd; padding:4px;">
+  <img src="Diagrams/ryujin_core.png" alt="Large view" style="display:block; max-width:none;">
+</div>
+
+---
 ## Dependencies
 
-To compile RyujinCore, RyujinConsole, and RyujinGUI, critical dependencies must be installed via [Microsoft VCPKG](https://github.com/microsoft/vcpkg), You can install them using the following commands:
+Install dependencies via [Microsoft vcpkg](https://github.com/microsoft/vcpkg):
 
-```
+```bash
 vcpkg install asmjit
 vcpkg install zydis
 vcpkg install z3
 ```
 
-For a consistent development environment, consider the following versions:
+Recommended versions for a consistent build environment:
 
 ```
 asmjit:x64-windows - 2024-06-28
-zycore:x64-windows - 1.5.0
-zydis:x64-windows - 4.1.0
-z3:x64-windows - 4.13.0
+zycore:x64-windows  - 1.5.0
+zydis:x64-windows   - 4.1.0
+z3:x64-windows      - 4.13.0
 ```
 
-In addition to these critical dependencies, some optional ones exist, for example, ```wxWidgets```, which is required to build RyujinGUI. It can be obtained from the [wxWidgets website](https://wxwidgets.org/downloads/).
+Optional dependency for the GUI:
 
+- `wxWidgets` - obtain from [https://wxwidgets.org/downloads/](https://wxwidgets.org/downloads/)
+
+---
 ## Research Paper
 
-If you enjoy understanding how things work technically and exploring deep concepts, consider reading the **Ryūjin paper**:
+The technical paper describing Ryūjin is forthcoming.
 
 **TODO**
 
+---
 ## Getting Started
 
-For more detailed usage information and explanations of each feature intended for daily use, consider reading the [**Ryūjin Wiki**](https://github.com/keowu/Ryujin/wiki).
+For usage examples, flags, advanced options, and full explanations of each feature, see the   
+[Ryūjin Wiki](https://github.com/keowu/Ryujin/wiki).
+
+---
+## License
+
+**TODO**
