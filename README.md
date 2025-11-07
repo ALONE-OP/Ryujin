@@ -114,7 +114,7 @@ The technical paper describing Ryūjin is forthcoming.
 ## Getting Started
 
 For usage examples, flags, advanced options, and full explanations of each feature, see the   
-[Ryūjin Wiki](https://github.com/keowu/Ryujin/wiki).
+[Ryūjin Wiki](https://github.com/keowu/Ryujin/wiki/Ry%C5%ABjin-Wiki).
 
 ---
 ## License
